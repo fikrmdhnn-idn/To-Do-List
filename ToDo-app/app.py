@@ -167,23 +167,22 @@ def add_task():
 
 @app.route('/toggle/<int:task_id>', methods=['POST'])
 def toggle_task(task_id):
-    """Menandai tugas sebagai selesai atau belum selesai."""
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
-
-    with get_db_connection() as conn:
-        task = conn.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,)).fetchone()
-        if not task:
-            if is_ajax:
-                return jsonify({'success': False, 'message': 'Tugas tidak ditemukan'}), 404
-            return redirect(url_for('index'))
-
-        new_status = 0 if task['completed'] == 1 else 1
-        conn.execute('UPDATE tasks SET completed = ? WHERE id = ?', (new_status, task_id))
-        conn.commit()
-
-    if is_ajax:
-        return jsonify({'success': True, 'completed': bool(new_status)})
-
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    try:
+        with get_db_connection() as conn:
+            # Ambil status saat ini
+            task = conn.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,)).fetchone()
+            if task:
+                new_status = 0 if task['completed'] else 1
+                conn.execute('UPDATE tasks SET completed = ? WHERE id = ?', (new_status, task_id))
+                conn.commit()
+        if is_ajax:
+            return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error toggle: {e}")
+        if is_ajax:
+            return jsonify({'success': False, 'error': str(e)}), 500
+            
     return redirect(url_for('index'))
 
 
