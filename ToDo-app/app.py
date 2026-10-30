@@ -190,15 +190,21 @@ def toggle_task(task_id):
 @app.route('/delete/<int:task_id>', methods=['POST'])
 def delete_task(task_id):
     """Menghapus tugas dari database."""
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
-
-    with get_db_connection() as conn:
-        conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
-        conn.commit()
-
-    if is_ajax:
-        return jsonify({'success': True})
-
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    try:
+        with get_db_connection() as conn:
+            conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+            conn.commit()
+            
+        if is_ajax:
+            return jsonify({'success': True})
+            
+    except Exception as e:
+        print(f"Error saat menghapus: {e}")
+        if is_ajax:
+            return jsonify({'success': False, 'error': str(e)}), 500
+            
     return redirect(url_for('index'))
 
 

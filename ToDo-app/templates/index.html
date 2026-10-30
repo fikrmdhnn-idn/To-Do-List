@@ -1,31 +1,35 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TugasKuliah - Manajemen Tugas & Deadline Mahasiswa</title>
-  
+  <title>List Deadline Tugas Kuliah</title>
+
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
   <!-- Custom Modern Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
 
   <div class="container">
-    
+
     <!-- HEADER BRANDING -->
     <header class="header-wrapper">
       <div>
         <div class="brand-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
           </svg>
-          Portal Tugas Mahasiswa
+          Portal Tugas
         </div>
         <h1 class="brand-title">Daftar Tugas & Deadline</h1>
         <p class="brand-subtitle">Pantau prioritas tugas kuliah dan deadline agar tidak ada yang terlewat.</p>
@@ -36,9 +40,10 @@
     <section class="stats-grid" aria-label="Statistik Tugas">
       <div class="stat-card">
         <div class="stat-icon total">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2"/>
-            <path d="m9 12 2 2 4-4"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="m9 12 2 2 4-4" />
           </svg>
         </div>
         <div class="stat-info">
@@ -49,9 +54,10 @@
 
       <div class="stat-card">
         <div class="stat-icon pending">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
         <div class="stat-info">
@@ -62,9 +68,10 @@
 
       <div class="stat-card">
         <div class="stat-icon completed">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
         <div class="stat-info">
@@ -77,10 +84,11 @@
     <!-- FORM INPUT TAMBAH TUGAS -->
     <section class="form-card">
       <div class="form-header">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v8"/>
-          <path d="M8 12h8"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 8v8" />
+          <path d="M8 12h8" />
         </svg>
         <h2>Tambah Tugas Kuliah Baru</h2>
       </div>
@@ -89,40 +97,22 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="title">Judul Tugas <span style="color: #ef4444;">*</span></label>
-            <input 
-              type="text" 
-              id="title" 
-              name="title" 
-              class="input-control" 
-              placeholder="Contoh: Makalah Sistem Terdistribusi Bab 3" 
-              required
-              autofocus
-            >
+            <input type="text" id="title" name="title" class="input-control"
+              placeholder="Contoh: Makalah Sistem Terdistribusi Bab 3" required autofocus>
           </div>
 
           <div class="form-group">
             <label for="course">Mata Kuliah / Kategori</label>
-            <input 
-              type="text" 
-              id="course" 
-              name="course" 
-              class="input-control" 
-              placeholder="Contoh: Pemrograman Web / Kalkulus"
-            >
+            <input type="text" id="course" name="course" class="input-control"
+              placeholder="Contoh: Pemrograman Web / Kalkulus">
           </div>
         </div>
 
         <div class="form-row-extra">
           <div class="form-group">
             <label for="deadline">Tanggal & Waktu Deadline <span style="color: #ef4444;">*</span></label>
-            <input 
-              type="datetime-local" 
-              id="deadline" 
-              name="deadline" 
-              class="input-control" 
-              value="{{ current_time }}"
-              required
-            >
+            <input type="datetime-local" id="deadline" name="deadline" class="input-control" value="{{ current_time }}"
+              required>
           </div>
 
           <div class="form-group">
@@ -135,7 +125,8 @@
           </div>
 
           <button type="submit" class="btn-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -148,145 +139,149 @@
     <!-- FILTER & PENCARIAN -->
     <div class="toolbar">
       <nav class="filter-tabs" aria-label="Filter status tugas">
-        <a href="{{ url_for('index', filter='all', q=search_query) }}" class="tab-btn {{ 'active' if filter_status == 'all' else '' }}">
+        <a href="{{ url_for('index', filter='all', q=search_query) }}"
+          class="tab-btn {{ 'active' if filter_status == 'all' else '' }}">
           Semua ({{ total_count }})
         </a>
-        <a href="{{ url_for('index', filter='active', q=search_query) }}" class="tab-btn {{ 'active' if filter_status == 'active' else '' }}">
+        <a href="{{ url_for('index', filter='active', q=search_query) }}"
+          class="tab-btn {{ 'active' if filter_status == 'active' else '' }}">
           Belum Selesai ({{ active_count }})
         </a>
-        <a href="{{ url_for('index', filter='completed', q=search_query) }}" class="tab-btn {{ 'active' if filter_status == 'completed' else '' }}">
+        <a href="{{ url_for('index', filter='completed', q=search_query) }}"
+          class="tab-btn {{ 'active' if filter_status == 'completed' else '' }}">
           Selesai ({{ completed_count }})
         </a>
       </nav>
 
       <form action="{{ url_for('index') }}" method="GET" class="search-box">
         <input type="hidden" name="filter" value="{{ filter_status }}">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
-        <input 
-          type="text" 
-          name="q" 
-          placeholder="Cari tugas atau mata kuliah..." 
-          value="{{ search_query }}"
-        >
+        <input type="text" name="q" placeholder="Cari tugas atau mata kuliah..." value="{{ search_query }}">
       </form>
     </div>
 
     <!-- TASK LIST SECTION -->
     <main class="task-list" id="taskList">
       {% if tasks %}
-        {% for task in tasks %}
-        <article class="task-item {{ 'is-completed' if task.completed else '' }}" id="task-{{ task.id }}">
-          
-          <div class="task-left">
-            <!-- CHECKBOX TOGGLE FORM -->
-            <form action="{{ url_for('toggle_task', task_id=task.id) }}" method="POST" class="toggle-form" data-task-id="{{ task.id }}">
-              <button type="submit" class="check-btn" title="{{ 'Tandai belum selesai' if task.completed else 'Tandai selesai' }}">
-                <div class="custom-checkbox">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-              </button>
-            </form>
+      {% for task in tasks %}
+      <article class="task-item {{ 'is-completed' if task.completed else '' }}" id="task-{{ task.id }}">
 
-            <div class="task-content">
-              <h3 class="task-title">{{ task.title }}</h3>
-              
-              <div class="task-meta">
-                {% if task.course %}
-                  <span class="badge badge-course">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    {{ task.course }}
-                  </span>
-                {% endif %}
-
-                <!-- BADGE PRIORITAS -->
-                <span class="badge badge-priority {{ task.priority.lower() }}">
-                  {{ task.priority }}
-                </span>
-
-                <!-- DEADLINE STATUS BADGE -->
-                <span class="badge badge-deadline {{ task.meta.status }}">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  {{ task.meta.label }}
-                </span>
-
-                <!-- TANGGAL DEADLINE -->
-                <span class="deadline-date">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  {{ task.meta.formatted }}
-                </span>
+        <div class="task-left">
+          <!-- CHECKBOX TOGGLE FORM -->
+          <form action="{{ url_for('toggle_task', task_id=task.id) }}" method="POST" class="toggle-form"
+            data-task-id="{{ task.id }}">
+            <button type="submit" class="check-btn"
+              title="{{ 'Tandai belum selesai' if task.completed else 'Tandai selesai' }}">
+              <div class="custom-checkbox">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
+            </button>
+          </form>
+
+          <div class="task-content">
+            <h3 class="task-title">{{ task.title }}</h3>
+
+            <div class="task-meta">
+              {% if task.course %}
+              <span class="badge badge-course">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                {{ task.course }}
+              </span>
+              {% endif %}
+
+              <!-- BADGE PRIORITAS -->
+              <span class="badge badge-priority {{ task.priority.lower() }}">
+                {{ task.priority }}
+              </span>
+
+              <!-- DEADLINE STATUS BADGE -->
+              <span class="badge badge-deadline {{ task.meta.status }}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                {{ task.meta.label }}
+              </span>
+
+              <!-- TANGGAL DEADLINE -->
+              <span class="deadline-date">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {{ task.meta.formatted }}
+              </span>
             </div>
           </div>
-
-          <!-- ACTIONS: DELETE BUTTON -->
-          <div class="task-actions">
-            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="POST" class="delete-form" data-task-id="{{ task.id }}">
-              <button 
-                type="submit" 
-                class="btn-delete" 
-                title="Hapus tugas" 
-                onclick="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18"/>
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                  <line x1="10" y1="11" x2="10" y2="17"/>
-                  <line x1="14" y1="11" x2="14" y2="17"/>
-                </svg>
-              </button>
-            </form>
-          </div>
-
-        </article>
-        {% endfor %}
-      {% else %}
-        <!-- EMPTY STATE -->
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-          </div>
-          <h3 class="empty-title">
-            {% if search_query %}
-              Tidak ada tugas yang cocok dengan pencarian
-            {% elif filter_status == 'completed' %}
-              Belum ada tugas yang diselesaikan
-            {% elif filter_status == 'active' %}
-              Semua tugas telah beres! 🎉
-            {% else %}
-              Belum Ada Daftar Tugas
-            {% endif %}
-          </h3>
-          <p class="empty-desc">
-            {% if search_query %}
-              Coba kata kunci pencarian yang lain atau reset filter.
-            {% else %}
-              Gunakan formulir di atas untuk mulai mencatat tugas kuliah dan tenggat waktunya.
-            {% endif %}
-          </p>
         </div>
+
+        <!-- ACTIONS: DELETE BUTTON -->
+        <div class="task-actions">
+          <form action="{{ url_for('delete_task', task_id=task.id) }}" method="POST" class="delete-form"
+            data-task-id="{{ task.id }}">
+            <button type="submit" class="btn-delete" title="Hapus tugas"
+              onclick="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18" />
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            </button>
+          </form>
+        </div>
+
+      </article>
+      {% endfor %}
+      {% else %}
+      <!-- EMPTY STATE -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+        </div>
+        <h3 class="empty-title">
+          {% if search_query %}
+          Tidak ada tugas yang cocok dengan pencarian
+          {% elif filter_status == 'completed' %}
+          Belum ada tugas yang diselesaikan
+          {% elif filter_status == 'active' %}
+          Semua tugas telah beres! 🎉
+          {% else %}
+          Belum Ada Daftar Tugas
+          {% endif %}
+        </h3>
+        <p class="empty-desc">
+          {% if search_query %}
+          Coba kata kunci pencarian yang lain atau reset filter.
+          {% else %}
+          Gunakan formulir di atas untuk mulai mencatat tugas kuliah dan tenggat waktunya.
+          {% endif %}
+        </p>
+      </div>
       {% endif %}
     </main>
 
@@ -333,4 +328,5 @@
   </script>
 
 </body>
+
 </html>

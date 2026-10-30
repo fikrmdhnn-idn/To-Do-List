@@ -8,14 +8,14 @@
   --primary-light: #eef2ff;
   --primary-border: #c7d2fe;
 
-  --bg-main: #f8fafc;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
+  --bg-main: #0f172a;
+  --card-bg: #1e1e1e;
+  --border-color: #334155;
   --border-hover: #cbd5e1;
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --text-light: #cbd5e1;
 
   /* Deadline & Status Badges */
   --badge-done-bg: #ecfdf5;
@@ -228,7 +228,8 @@ body {
   letter-spacing: 0.04em;
 }
 
-.input-control, .select-control {
+.input-control,
+.select-control {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
@@ -241,7 +242,8 @@ body {
   transition: var(--transition);
 }
 
-.input-control:focus, .select-control:focus {
+.input-control:focus,
+.select-control:focus {
   background-color: #ffffff;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
