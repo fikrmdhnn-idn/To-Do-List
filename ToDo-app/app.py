@@ -4,21 +4,21 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'mahasiswa-produktif-secret-key-2026'
+app.config['SECRET_KEY'] = 'tugas-kuliah-dark-mode-2026'
 
-# Lokasi file database SQLite
+# Lokasi database SQLite
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
 
 
 def get_db_connection():
-    """Membuka koneksi ke SQLite dengan row_factory agar kolom bisa diakses via nama atribut."""
+    """Membuka koneksi ke SQLite database."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
-    """Membuat tabel tasks jika belum ada."""
+    """Inisialisasi tabel database jika belum ada."""
     with get_db_connection() as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
@@ -34,170 +34,209 @@ def init_db():
         conn.commit()
 
 
-def calculate_deadline_meta(deadline_str, completed):
+def process_task(task_row, now):
     """
-    Menghitung status deadline dan label sisa waktu yang ramah pengguna.
-    Mengembalikan dict: { 'status': 'done'|'overdue'|'urgent'|'upcoming', 'label': str, 'formatted': str }
+    Memproses baris tugas dan menentukan statusnya:
+    - active: belum selesai dan belum melewati deadline
+    - overdue: belum selesai tapi sudah melewati tenggat waktu
+    - completed: sudah dicentang selesai oleh pengguna
     """
-    if completed:
-        try:
-            dt = datetime.fromisoformat(deadline_str)
-            formatted = dt.strftime("%d %b %Y, %H:%M")
-        except Exception:
-            formatted = deadline_str
-        return {
-            'status': 'done',
-            'label': 'Selesai',
-            'formatted': formatted
-        }
+    task = dict(task_row)
+    deadline_str = task.get('deadline', '')
+    is_completed = bool(task.get('completed', 0))
 
     try:
         deadline_dt = datetime.fromisoformat(deadline_str)
-        now = datetime.now()
-        diff = deadline_dt - now
-        formatted = deadline_dt.strftime("%d %b %Y, %H:%M")
+        formatted_date = deadline_dt.strftime("%d %b %Y, %H:%M")
+        is_past_deadline = deadline_dt < now
+    except Exception:
+        deadline_dt = None
+        formatted_date = deadline_str
+        is_past_deadline = False
 
-        if diff.total_seconds() < 0:
-            # Sudah lewat deadline
-            past = abs(diff)
-            days = past.days
-            hours = past.seconds // 3600
+    if is_completed:
+        task['category'] = 'completed'
+        task['status_label'] = 'Selesai Dikerjakan'
+        task['status_badge'] = 'badge-completed'
+        task['time_desc'] = 'Telah diselesaikan'
+    elif is_past_deadline:
+        # Sudah melebihi tenggat waktu dan belum dicentang
+        task['category'] = 'overdue'
+        task['status_label'] = 'Telah Melebihi Tenggat Waktu'
+        task['status_badge'] = 'badge-overdue'
+
+        if deadline_dt:
+            diff = now - deadline_dt
+            days = diff.days
+            hours = diff.seconds // 3600
             if days > 0:
-                label = f"Terlewat {days} hari"
+                task['time_desc'] = f"Terlewat {days} hari yang lalu"
             elif hours > 0:
-                label = f"Terlewat {hours} jam"
+                task['time_desc'] = f"Terlewat {hours} jam yang lalu"
             else:
-                label = "Baru saja lewat"
-            return {'status': 'overdue', 'label': label, 'formatted': formatted}
+                task['time_desc'] = "Baru saja terlewat"
         else:
+            task['time_desc'] = "Tenggat waktu terlewat"
+    else:
+        # Masih aktif dan dalam masa tenggat
+        task['category'] = 'active'
+        task['status_badge'] = 'badge-active'
+
+        if deadline_dt:
+            diff = deadline_dt - now
             days = diff.days
             hours = diff.seconds // 3600
             minutes = (diff.seconds % 3600) // 60
 
             if days == 0 and hours < 24:
-                # Kurang dari 24 jam (Mendekati deadline / Urgent)
+                task['status_label'] = 'Mendekati Deadline'
+                task['status_badge'] = 'badge-urgent'
                 if hours == 0:
-                    label = f"Sisa {minutes} menit lagi"
+                    task['time_desc'] = f"Sisa {minutes} menit lagi!"
                 else:
-                    label = f"Sisa {hours} jam {minutes} mnt"
-                return {'status': 'urgent', 'label': label, 'formatted': formatted}
+                    task['time_desc'] = f"Sisa {hours} jam {minutes} menit lagi"
             elif days == 1:
-                return {'status': 'urgent', 'label': 'Besok deadline', 'formatted': formatted}
+                task['status_label'] = 'Deadline Besok'
+                task['status_badge'] = 'badge-urgent'
+                task['time_desc'] = "Besok harus dikumpulkan"
             else:
-                return {'status': 'upcoming', 'label': f"Sisa {days} hari", 'formatted': formatted}
+                task['status_label'] = 'Sedang Berjalan'
+                task['time_desc'] = f"Sisa {days} hari lagi"
+        else:
+            task['status_label'] = 'Sedang Berjalan'
+            task['time_desc'] = 'Sesuai jadwal'
 
-    except Exception:
-        return {'status': 'upcoming', 'label': 'Jadwal deadline', 'formatted': deadline_str}
+    task['formatted_deadline'] = formatted_date
+    return task
 
 
 @app.route('/')
 def index():
-    """Halaman utama daftar tugas kuliah dengan filter."""
-    filter_status = request.args.get('filter', 'all')
+    """Halaman utama dengan pembagian tugas aktif dan tugas selesai/terlewat."""
+    filter_tab = request.args.get('tab', 'active')  # 'active', 'history', 'all'
     search_query = request.args.get('q', '').strip()
+    now = datetime.now()
 
     conn = get_db_connection()
 
-    base_query = 'SELECT * FROM tasks'
-    conditions = []
+    query = 'SELECT * FROM tasks'
     params = []
-
-    if filter_status == 'active':
-        conditions.append('completed = 0')
-    elif filter_status == 'completed':
-        conditions.append('completed = 1')
-
     if search_query:
-        conditions.append('(title LIKE ? OR course LIKE ?)')
+        query += ' WHERE title LIKE ? OR course LIKE ?'
         params.extend([f'%{search_query}%', f'%{search_query}%'])
 
-    if conditions:
-        base_query += ' WHERE ' + ' AND '.join(conditions)
-
-    # Urutkan berdasarkan status belum selesai terlebih dahulu, lalu deadline terdekat
-    base_query += ' ORDER BY completed ASC, deadline ASC'
-
-    tasks_raw = conn.execute(base_query, params).fetchall()
-
-    # Hitung statistik
-    total_count = conn.execute('SELECT COUNT(*) FROM tasks').fetchone()[0]
-    active_count = conn.execute('SELECT COUNT(*) FROM tasks WHERE completed = 0').fetchone()[0]
-    completed_count = conn.execute('SELECT COUNT(*) FROM tasks WHERE completed = 1').fetchone()[0]
+    query += ' ORDER BY deadline ASC'
+    rows = conn.execute(query, params).fetchall()
     conn.close()
 
-    # Perkaya data tugas dengan informasi status deadline
-    tasks = []
-    for row in tasks_raw:
-        task_dict = dict(row)
-        task_dict['meta'] = calculate_deadline_meta(task_dict['deadline'], task_dict['completed'])
-        tasks.append(task_dict)
+    all_tasks = [process_task(row, now) for row in rows]
+
+    # Klasifikasi:
+    # 1. active_tasks: Belum selesai DAN belum lewat deadline (tugas yang mau dikerjakan)
+    # 2. history_tasks: Sudah selesai ATAU telah melebihi tenggat waktu
+    active_tasks = [t for t in all_tasks if t['category'] == 'active']
+    overdue_tasks = [t for t in all_tasks if t['category'] == 'overdue']
+    completed_tasks = [t for t in all_tasks if t['category'] == 'completed']
+
+    # Gabungan tempat tugas yang telah selesai bersama dengan yang telah melebihi tenggat waktu
+    history_tasks = [t for t in all_tasks if t['category'] in ('completed', 'overdue')]
+    # Urutkan history: yang overdue dan yang baru selesai di atas
+    history_tasks.sort(key=lambda x: (x['category'] != 'overdue', x['deadline']), reverse=True)
+
+    counts = {
+        'total': len(all_tasks),
+        'active': len(active_tasks),
+        'overdue': len(overdue_tasks),
+        'completed': len(completed_tasks),
+        'history': len(history_tasks)
+    }
 
     return render_template(
         'index.html',
-        tasks=tasks,
-        total_count=total_count,
-        active_count=active_count,
-        completed_count=completed_count,
-        filter_status=filter_status,
+        active_tasks=active_tasks,
+        history_tasks=history_tasks,
+        all_tasks=all_tasks,
+        counts=counts,
+        current_tab=filter_tab,
         search_query=search_query,
-        current_time=datetime.now().strftime("%Y-%m-%dT%H:%M")
+        current_time=now.strftime("%Y-%m-%dT%H:%M")
     )
 
 
 @app.route('/add', methods=['POST'])
 def add_task():
-    """Menambahkan tugas kuliah baru ke database."""
+    """Menambahkan tugas baru ke daftar."""
     title = request.form.get('title', '').strip()
     course = request.form.get('course', '').strip()
     deadline = request.form.get('deadline', '').strip()
     priority = request.form.get('priority', 'Sedang')
 
-    if not title or not deadline:
-        return redirect(url_for('index'))
+    if title and deadline:
+        with get_db_connection() as conn:
+            conn.execute(
+                'INSERT INTO tasks (title, course, deadline, priority, completed) VALUES (?, ?, ?, ?, 0)',
+                (title, course, deadline, priority)
+            )
+            conn.commit()
 
-    with get_db_connection() as conn:
-        conn.execute(
-            'INSERT INTO tasks (title, course, deadline, priority, completed) VALUES (?, ?, ?, ?, 0)',
-            (title, course, deadline, priority)
-        )
-        conn.commit()
-
-    return redirect(url_for('index'))
+    return redirect(url_for('index', tab='active'))
 
 
 @app.route('/toggle/<int:task_id>', methods=['POST'])
 def toggle_task(task_id):
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    try:
-        with get_db_connection() as conn:
-            # Ambil status saat ini
-            task = conn.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,)).fetchone()
-            if task:
-                new_status = 0 if task['completed'] else 1
-                conn.execute('UPDATE tasks SET completed = ? WHERE id = ?', (new_status, task_id))
-                conn.commit()
-        if is_ajax:
-            return jsonify({'success': True})
-    except Exception as e:
-        print(f"Error toggle: {e}")
-        if is_ajax:
-            return jsonify({'success': False, 'error': str(e)}), 500
-            
-    return redirect(url_for('index'))
+    """
+    Menandai tugas selesai secara manual:
+    - Jika belum selesai -> dicentang menjadi selesai (berpindah ke tempat selesai)
+    - Jika sudah selesai -> dikembalikan ke belum selesai
+    """
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    with get_db_connection() as conn:
+        task = conn.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,)).fetchone()
+        if not task:
+            if is_ajax:
+                return jsonify({'success': False, 'message': 'Tugas tidak ditemukan'}), 404
+            return redirect(url_for('index'))
+
+        new_status = 0 if task['completed'] == 1 else 1
+        conn.execute('UPDATE tasks SET completed = ? WHERE id = ?', (new_status, task_id))
+        conn.commit()
+
+    if is_ajax:
+        return jsonify({'success': True, 'completed': bool(new_status)})
+
+    return redirect(request.referrer or url_for('index'))
 
 
 @app.route('/delete/<int:task_id>', methods=['POST'])
 def delete_task(task_id):
-    try:
-        with get_db_connection() as conn:
-            conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
-            conn.commit()
-    except Exception as e:
-        print(f"Error saat menghapus: {e}")
-    return redirect(url_for('index'))
+    """Menghapus tugas secara permanen dari daftar."""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    with get_db_connection() as conn:
+        conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        conn.commit()
+
+    if is_ajax:
+        return jsonify({'success': True})
+
+    return redirect(request.referrer or url_for('index'))
+
+
+@app.route('/clear-history', methods=['POST'])
+def clear_history():
+    """Menghapus seluruh tugas yang ada di riwayat (selesai & melebihi deadline)."""
+    now_iso = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    with get_db_connection() as conn:
+        # Hapus yang completed == 1 ATAU yang belum selesai tapi deadline sudah terlewat
+        conn.execute('DELETE FROM tasks WHERE completed = 1 OR deadline < ?', (now_iso,))
+        conn.commit()
+    return redirect(url_for('index', tab='history'))
 
 
 if __name__ == '__main__':
     init_db()
-    # Menjalankan server Flask di port 5000
+    # Server berjalan di protokol HTTP (http://127.0.0.1:5000)
+    print("=" * 60)
+    print("🚀 Server Aplikasi Tugas Kuliah Aktif!")
+    print("📌 Akses via browser: http://127.0.0.1:5000 (Gunakan HTTP, bukan HTTPS)")
+    print("=" * 60)
     app.run(debug=True, host='127.0.0.1', port=5000)
