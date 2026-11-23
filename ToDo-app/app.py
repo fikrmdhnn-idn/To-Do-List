@@ -307,6 +307,17 @@ def clear_history():
     return redirect(url_for('index', tab='history'))
 
 
+@app.route('/antigravity', methods=['GET', 'POST'])
+def antigravity():
+    """Endpoint Antigravity yang mengembalikan respon JSON."""
+    return jsonify({
+        'status': 'success',
+        'message': 'Endpoint /antigravity berhasil diakses!',
+        'method': request.method,
+        'timestamp': datetime.now().isoformat()
+    })
+
+
 if __name__ == '__main__':
     init_db()
     has_ssl = ensure_ssl_certificates()
