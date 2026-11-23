@@ -1,13 +1,14 @@
 @echo off
-title Aplikasi Tugas Kuliah
+title Aplikasi Tugas Kuliah (HTTPS Secure)
 cd /d "%~dp0"
 echo ============================================================
-echo   Menjalankan Server Aplikasi Tugas Kuliah
-echo   URL: http://127.0.0.1:5000
+echo   Menjalankan Server Aplikasi Tugas Kuliah (HTTPS)
+echo   URL: https://127.0.0.1:5000
+echo   Status: SSL/TLS Encryption Aktif
 echo ============================================================
 echo.
-echo Membuka browser otomatis...
-start http://127.0.0.1:5000
+echo Membuka browser aman via HTTPS...
+start https://127.0.0.1:5000
 "C:\Users\acer\AppData\Local\Programs\Python\Python314\python.exe" app.py
 if %ERRORLEVEL% NEQ 0 (
     echo.
@@ -15,4 +16,3 @@ if %ERRORLEVEL% NEQ 0 (
     py app.py
 )
 pause
-

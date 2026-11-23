@@ -1,19 +1,64 @@
 import sqlite3
 import os
+import subprocess
+import secrets
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'tugas-kuliah-dark-mode-2026'
 
-# Lokasi database SQLite
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+# Konfigurasi secret key yang aman (persisten per sesi/instalasi)
+SECRET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.secret_key')
+if not os.path.exists(SECRET_FILE):
+    with open(SECRET_FILE, 'w') as f:
+        f.write(secrets.token_hex(32))
+with open(SECRET_FILE, 'r') as f:
+    app.config['SECRET_KEY'] = f.read().strip()
+
+# Lokasi database dan file sertifikat SSL
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'database.db')
+CERT_FILE = os.path.join(BASE_DIR, 'cert.pem')
+KEY_FILE = os.path.join(BASE_DIR, 'key.pem')
+
+
+def ensure_ssl_certificates():
+    """
+    Memastikan sertifikat TLS/HTTPS (cert.pem dan key.pem) tersedia.
+    Jika belum ada, sertifikat self-signed dibuat secara otomatis dengan OpenSSL.
+    """
+    if os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE):
+        return True
+
+    openssl_bin = r"C:\msys64\ucrt64\bin\openssl.exe"
+    if not os.path.exists(openssl_bin):
+        openssl_bin = "openssl"
+
+    try:
+        cmd = [
+            openssl_bin, "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", KEY_FILE, "-out", CERT_FILE, "-days", "3650",
+            "-subj", "/CN=localhost",
+            "-addext", "subjectAltName=DNS:localhost,IP:127.0.0.1"
+        ]
+        subprocess.run(cmd, check=True, capture_output=True)
+        return True
+    except Exception as e:
+        print(f"[SSL WARNING] Gagal membuat sertifikat otomatis: {e}")
+        return False
 
 
 def get_db_connection():
-    """Membuka koneksi ke SQLite database."""
+    """
+    Membuka koneksi ke SQLite database dengan konfigurasi aman:
+    - row_factory: Dict-like access
+    - foreign_keys: Integritas referensial aktif
+    - journal_mode WAL: Lebih tangguh terhadap crash dan konkurensi
+    """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA foreign_keys = ON;')
+    conn.execute('PRAGMA journal_mode = WAL;')
     return conn
 
 
@@ -32,6 +77,36 @@ def init_db():
             )
         ''')
         conn.commit()
+
+
+@app.after_request
+def apply_security_headers(response):
+    """
+    Menambahkan HTTP Security Headers modern (OWASP Best Practices)
+    untuk mengamankan aplikasi web lokal:
+    """
+    # Enforce HTTPS strictly (HSTS)
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Mencegah browser menebak tipe konten (MIME Sniffing)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Melindungi dari Clickjacking (hanya boleh di-frame oleh origin sendiri)
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # XSS Protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Kontrol pengiriman referrer
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Content Security Policy (CSP): hanya izinkan resource dari origin sendiri dan Google Fonts
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "script-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self';"
+    )
+    # Matikan izin akses fitur hardware lokal yang tidak dibutuhkan
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    return response
 
 
 def process_task(task_row, now):
@@ -60,7 +135,6 @@ def process_task(task_row, now):
         task['status_badge'] = 'badge-completed'
         task['time_desc'] = 'Telah diselesaikan'
     elif is_past_deadline:
-        # Sudah melebihi tenggat waktu dan belum dicentang
         task['category'] = 'overdue'
         task['status_label'] = 'Telah Melebihi Tenggat Waktu'
         task['status_badge'] = 'badge-overdue'
@@ -78,7 +152,6 @@ def process_task(task_row, now):
         else:
             task['time_desc'] = "Tenggat waktu terlewat"
     else:
-        # Masih aktif dan dalam masa tenggat
         task['category'] = 'active'
         task['status_badge'] = 'badge-active'
 
@@ -113,12 +186,11 @@ def process_task(task_row, now):
 @app.route('/')
 def index():
     """Halaman utama dengan pembagian tugas aktif dan tugas selesai/terlewat."""
-    filter_tab = request.args.get('tab', 'active')  # 'active', 'history', 'all'
+    filter_tab = request.args.get('tab', 'active')
     search_query = request.args.get('q', '').strip()
     now = datetime.now()
 
     conn = get_db_connection()
-
     query = 'SELECT * FROM tasks'
     params = []
     if search_query:
@@ -131,16 +203,11 @@ def index():
 
     all_tasks = [process_task(row, now) for row in rows]
 
-    # Klasifikasi:
-    # 1. active_tasks: Belum selesai DAN belum lewat deadline (tugas yang mau dikerjakan)
-    # 2. history_tasks: Sudah selesai ATAU telah melebihi tenggat waktu
     active_tasks = [t for t in all_tasks if t['category'] == 'active']
     overdue_tasks = [t for t in all_tasks if t['category'] == 'overdue']
     completed_tasks = [t for t in all_tasks if t['category'] == 'completed']
 
-    # Gabungan tempat tugas yang telah selesai bersama dengan yang telah melebihi tenggat waktu
     history_tasks = [t for t in all_tasks if t['category'] in ('completed', 'overdue')]
-    # Urutkan history: yang overdue dan yang baru selesai di atas
     history_tasks.sort(key=lambda x: (x['category'] != 'overdue', x['deadline']), reverse=True)
 
     counts = {
@@ -165,30 +232,39 @@ def index():
 
 @app.route('/add', methods=['POST'])
 def add_task():
-    """Menambahkan tugas baru ke daftar."""
+    """Menambahkan tugas baru dengan validasi input yang ketat."""
     title = request.form.get('title', '').strip()
     course = request.form.get('course', '').strip()
     deadline = request.form.get('deadline', '').strip()
     priority = request.form.get('priority', 'Sedang')
 
-    if title and deadline:
-        with get_db_connection() as conn:
-            conn.execute(
-                'INSERT INTO tasks (title, course, deadline, priority, completed) VALUES (?, ?, ?, ?, 0)',
-                (title, course, deadline, priority)
-            )
-            conn.commit()
+    # Validasi input
+    if not title or not deadline:
+        return redirect(url_for('index', tab='active'))
+
+    allowed_priorities = {'Tinggi', 'Sedang', 'Rendah'}
+    if priority not in allowed_priorities:
+        priority = 'Sedang'
+
+    # Validasi format ISO deadline
+    try:
+        datetime.fromisoformat(deadline)
+    except Exception:
+        return redirect(url_for('index', tab='active'))
+
+    with get_db_connection() as conn:
+        conn.execute(
+            'INSERT INTO tasks (title, course, deadline, priority, completed) VALUES (?, ?, ?, ?, 0)',
+            (title, course, deadline, priority)
+        )
+        conn.commit()
 
     return redirect(url_for('index', tab='active'))
 
 
 @app.route('/toggle/<int:task_id>', methods=['POST'])
 def toggle_task(task_id):
-    """
-    Menandai tugas selesai secara manual:
-    - Jika belum selesai -> dicentang menjadi selesai (berpindah ke tempat selesai)
-    - Jika sudah selesai -> dikembalikan ke belum selesai
-    """
+    """Menandai tugas selesai secara manual."""
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
     with get_db_connection() as conn:
         task = conn.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,)).fetchone()
@@ -226,7 +302,6 @@ def clear_history():
     """Menghapus seluruh tugas yang ada di riwayat (selesai & melebihi deadline)."""
     now_iso = datetime.now().strftime("%Y-%m-%dT%H:%M")
     with get_db_connection() as conn:
-        # Hapus yang completed == 1 ATAU yang belum selesai tapi deadline sudah terlewat
         conn.execute('DELETE FROM tasks WHERE completed = 1 OR deadline < ?', (now_iso,))
         conn.commit()
     return redirect(url_for('index', tab='history'))
@@ -234,9 +309,19 @@ def clear_history():
 
 if __name__ == '__main__':
     init_db()
-    # Server berjalan di protokol HTTP (http://127.0.0.1:5000)
-    print("=" * 60)
-    print("[SERVER RUNNING] Server Aplikasi Tugas Kuliah Aktif!")
-    print("[URL AKSES] Buka di browser: http://127.0.0.1:5000 (Gunakan HTTP, bukan HTTPS)")
-    print("=" * 60)
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    has_ssl = ensure_ssl_certificates()
+
+    print("=" * 65)
+    if has_ssl and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE):
+        print("[SERVER RUNNING]")
+        print("[URL AKSES] Buka di browser: https://127.0.0.1:5000")
+        print("                           : https://localhost:5000")
+        print("[KEAMANAN] Terproteksi dengan SSL/TLS Encryption & OWASP Headers.")
+        print("=" * 65)
+        # Server HTTPS terikat secara aman pada 127.0.0.1 (hanya komputer lokal)
+        app.run(debug=True, host='127.0.0.1', port=5000, ssl_context=(CERT_FILE, KEY_FILE))
+    else:
+        print("[SERVER RUNNING] Menjalankan server fallback via HTTP...")
+        print("[URL AKSES] Buka di browser: http://127.0.0.1:5000")
+        print("=" * 65)
+        app.run(debug=True, host='127.0.0.1', port=5000)

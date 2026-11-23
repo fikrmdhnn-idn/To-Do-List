@@ -1,0 +1,15 @@
+# Private Keys and Certificates
+*.pem
+.secret_key
+
+# SQLite Database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Python Cache & Virtual Environments
+__pycache__/
+*.py[cod]
+.venv/
+env/
